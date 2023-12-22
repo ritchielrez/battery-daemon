@@ -41,6 +41,12 @@ func runCommand(command string, args ...string) string {
 }
 
 func sendNotification(appname string, msg string, urgency string) {
+	if urgency != "low" && urgency != "normal" && urgency != critical && urgency != "" {
+		log.Fatalf(
+			"Invalid urgency level specified, by default the urgency level is 'normal', but other valid ones are: 'low', 'critical'\n",
+		)
+	}
+
 	if appname == "" && urgency == "" {
 		_ = runCommand("dunstify", msg)
 	} else if appname == "" && urgency != "" {
@@ -53,7 +59,7 @@ func sendNotification(appname string, msg string, urgency string) {
 }
 
 func compareBatteryStatus(previous, current charging_status) {
-	if previous == 0 && current == 0 {
+	if previous == -1 && current == -1 {
 		log.Fatalf("BatteryStates were not initialized\n")
 		return
 	}
@@ -145,7 +151,7 @@ func main() {
 					battery_state.current = &Battery{
 						model_name: "",
 						percentage: "",
-						status:     charging_status(0),
+						status:     charging_status(-1),
 					}
 				}
 
@@ -156,7 +162,7 @@ func main() {
 				battery_state.current = &Battery{
 					model_name: "",
 					percentage: "",
-					status:     charging_status(0),
+					status:     charging_status(-1),
 				}
 
 				for _, battery_info := range battery_info_list {

@@ -4,6 +4,7 @@ import (
 	"log"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -98,6 +99,14 @@ func matchString(pattern string, s string) bool {
 	}
 }
 
+func stringToInt(s string) int {
+	num, err := strconv.Atoi(s)
+	if err != nil {
+		log.Fatalf("Cannot convert string %s to integer, error %v\n", s, err)
+	}
+	return num
+}
+
 func main() {
 	// cmd := exec.Command("acpi")
 	// output, err := cmd.CombinedOutput()
@@ -147,7 +156,7 @@ func main() {
 						battery_state.current.model_name = strings.TrimSpace(
 							strings.Split(battery_info, ":")[1],
 						)
-						log.Printf("Battery model: %s\n", battery_state.current.model_name)
+						log.Printf("Battery model: %v\n", battery_state.current.model_name)
 						continue
 					}
 					if matchString("percentage", battery_info) {
@@ -155,7 +164,7 @@ func main() {
 							strings.Split(battery_info, ":")[1],
 						)
 						log.Printf(
-							"Battery percentage: %s\n",
+							"Battery percentage: %v\n",
 							battery_state.current.percentage,
 						)
 						continue
@@ -172,7 +181,7 @@ func main() {
 						} else if battery_charging_state == "fully-charged" && battery_state.current.status != charged {
 							battery_state.current.status = charged
 						}
-						log.Printf("Battery state: %s\n", battery_charging_state)
+						log.Printf("Battery state: %v\n", battery_charging_state)
 					}
 				}
 

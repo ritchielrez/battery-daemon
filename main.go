@@ -21,7 +21,7 @@ const (
 
 type Battery struct {
 	model_name string
-	percentage string
+	percentage int
 	status     charging_status
 }
 
@@ -150,7 +150,7 @@ func main() {
 
 					battery_state.current = &Battery{
 						model_name: "",
-						percentage: "",
+						percentage: -1,
 						status:     charging_status(-1),
 					}
 				}
@@ -161,7 +161,7 @@ func main() {
 
 				battery_state.current = &Battery{
 					model_name: "",
-					percentage: "",
+					percentage: -1,
 					status:     charging_status(-1),
 				}
 
@@ -174,9 +174,10 @@ func main() {
 						continue
 					}
 					if matchString("percentage", battery_info) {
-						battery_state.current.percentage = strings.TrimSpace(
+						percentage_str := strings.TrimSuffix(strings.TrimSpace(
 							strings.Split(battery_info, ":")[1],
-						)
+						), "%")
+						battery_state.current.percentage = stringToInt(percentage_str)
 						log.Printf(
 							"Battery percentage: %v\n",
 							battery_state.current.percentage,

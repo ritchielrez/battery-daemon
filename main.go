@@ -40,8 +40,16 @@ func runCommand(command string, args ...string) string {
 	return strings.TrimSpace(string(cmd_output))
 }
 
-func sendNotification(msg string) {
-	_ = runCommand("dunstify", msg)
+func sendNotification(appname string, msg string, urgency string) {
+	if appname == "" && urgency == "" {
+		_ = runCommand("dunstify", msg)
+	} else if appname == "" && urgency != "" {
+		_ = runCommand("dunstify", msg, "-u", urgency)
+	} else if appname != "" && urgency == "" {
+		_ = runCommand("dunstify", msg, "-a", appname)
+	} else {
+		_ = runCommand("dunstify", msg, "-a", appname, "-u", urgency)
+	}
 }
 
 func compareBatteryStatus(previous, current charging_status) {
@@ -52,11 +60,11 @@ func compareBatteryStatus(previous, current charging_status) {
 	if previous != current {
 		switch current {
 		case discharging:
-			sendNotification("Battery currently discharging")
+			sendNotification("battery-daemon", "Battery is currently discharging", "")
 		case charging:
-			sendNotification("Battery currently charging")
+			sendNotification("battery-daemon", "Battery is currently charging", "")
 		case charged:
-			sendNotification("Battery is now fully charged")
+			sendNotification("battery-daemon", "Battery is now fully charged", "")
 		}
 	}
 }
@@ -67,10 +75,10 @@ func checkBatteryPercentage(percentage int) {
 		return
 	}
 	if percentage <= warning_level {
-		sendNotification("Battery is low")
+		sendNotification("battery-daemon", "Battery is low", "critical")
 	}
 	if percentage <= fatal_level {
-		sendNotification("Battery is really low")
+		sendNotification("battery-daemon", "Battery is really low", "critical")
 	}
 }
 

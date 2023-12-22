@@ -41,7 +41,7 @@ func runCommand(command string, args ...string) string {
 }
 
 func sendNotification(appname string, msg string, urgency string) {
-	if urgency != "low" && urgency != "normal" && urgency != critical && urgency != "" {
+	if urgency != "low" && urgency != "normal" && urgency != "critical" && urgency != "" {
 		log.Fatalf(
 			"Invalid urgency level specified, by default the urgency level is 'normal', but other valid ones are: 'low', 'critical'\n",
 		)

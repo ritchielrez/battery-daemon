@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-const warning_level = "20%"
-const fatal_level = "10%"
+const warning_level = 20
+const fatal_level = 10
 
 type charging_status int
 
@@ -60,8 +60,8 @@ func compareBatteryStatus(previous, current charging_status) {
 	}
 }
 
-func checkBatteryPercentage(percentage string) {
-	if percentage == "" {
+func checkBatteryPercentage(percentage int) {
+	if percentage == -1 {
 		log.Fatalf("BatteryState was not properly initialized\n")
 		return
 	}

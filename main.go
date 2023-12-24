@@ -25,11 +25,6 @@ type Battery struct {
 	status     charging_status
 }
 
-type BatteryState struct {
-	previous *Battery
-	current  *Battery
-}
-
 func runCommand(command string, args ...string) string {
 	cmd := exec.Command(command, args...)
 	cmd_output, err := cmd.CombinedOutput()
@@ -134,7 +129,7 @@ func main() {
 	//
 	// time.Sleep(time.Second)
 
-	batteries_list := make(map[string]*BatteryState)
+	batteries_list := make(map[string]*Battery)
 	previous_batteries_count := uint(0)
 	current_batteries_count := uint(0)
 
@@ -143,46 +138,31 @@ func main() {
 
 		for _, power_device := range power_devices {
 			if matchString("battery", power_device) {
+				previous_batteries_count = current_batteries_count
 				battery_info_list := getBatteryInfoList(power_device)
 
-				battery_state, exists := batteries_list[power_device]
-				if !exists {
-					battery_state = &BatteryState{}
-					batteries_list[power_device] = battery_state
-
-					battery_state.current = &Battery{
-						model_name: "",
-						percentage: -1,
-						status:     charging_status(-1),
-					}
-				}
-
-				log.Println("Before creating battery_state")
-				battery_state.previous = battery_state.current
-				log.Println("After creating battery_state")
-
-				battery_state.current = &Battery{
+				batteries_list[power_device] = &Battery{
 					model_name: "",
 					percentage: -1,
-					status:     charging_status(-1),
+					status:     -1,
 				}
 
 				for _, battery_info := range battery_info_list {
 					if matchString("model", battery_info) {
-						battery_state.current.model_name = strings.TrimSpace(
+						batteries_list[power_device].model_name = strings.TrimSpace(
 							strings.Split(battery_info, ":")[1],
 						)
-						log.Printf("Battery model: %v\n", battery_state.current.model_name)
+						log.Printf("Battery model: %v\n", batteries_list[power_device].model_name)
 						continue
 					}
 					if matchString("percentage", battery_info) {
 						percentage_str := strings.TrimSuffix(strings.TrimSpace(
 							strings.Split(battery_info, ":")[1],
 						), "%")
-						battery_state.current.percentage = stringToInt(percentage_str)
+						batteries_list[power_device].percentage = stringToInt(percentage_str)
 						log.Printf(
 							"Battery percentage: %v\n",
-							battery_state.current.percentage,
+							batteries_list[power_device].percentage,
 						)
 						continue
 					}
@@ -191,12 +171,12 @@ func main() {
 							strings.Split(strings.TrimSpace(battery_info), ":")[1],
 						)
 						if battery_charging_state == "charging" &&
-							battery_state.current.status != charging {
-							battery_state.current.status = charging
-						} else if battery_charging_state == "discharging" && battery_state.current.status != discharging {
-							battery_state.current.status = discharging
-						} else if battery_charging_state == "fully-charged" && battery_state.current.status != charged {
-							battery_state.current.status = charged
+							batteries_list[power_device].status != charging {
+							batteries_list[power_device].status = charging
+						} else if battery_charging_state == "discharging" && batteries_list[power_device].status != discharging {
+							batteries_list[power_device].status = discharging
+						} else if battery_charging_state == "fully-charged" && batteries_list[power_device].status != charged {
+							batteries_list[power_device].status = charged
 						}
 						log.Printf("Battery state: %v\n", battery_charging_state)
 					}

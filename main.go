@@ -135,6 +135,8 @@ func main() {
 	// time.Sleep(time.Second)
 
 	batteries_list := make(map[string]*BatteryState)
+	previous_batteries_count := uint(0)
+	current_batteries_count := uint(0)
 
 	for {
 		power_devices := getPowerDevicesList()
@@ -199,9 +201,19 @@ func main() {
 						log.Printf("Battery state: %v\n", battery_charging_state)
 					}
 				}
+				current_batteries_count = uint(len(batteries_list))
 
-				compareBatteryStatus(battery_state.previous.status, battery_state.current.status)
-				checkBatteryPercentage(battery_state.current.percentage)
+				if previous_batteries_count != 0 && current_batteries_count != 0 {
+					if previous_batteries_count+1 == current_batteries_count {
+						sendNotification("battery-daemon", "A battery has been connected", "")
+					} else if previous_batteries_count < current_batteries_count {
+						sendNotification("battery-daemon", "Multiple batteries have been connected", "")
+					} else if previous_batteries_count == current_batteries_count-1 {
+						sendNotification("battery-daemon", "A battery have been disconnected", "")
+					} else if previous_batteries_count > current_batteries_count {
+						sendNotification("battery-daemon", "Multiple batteries have been disconnected", "")
+					}
+				}
 			}
 
 		}

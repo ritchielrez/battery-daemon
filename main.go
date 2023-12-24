@@ -187,6 +187,7 @@ func main() {
 				}
 
 				compareBatteryStatus(previous_battery_status, current_battery_status)
+                checkBatteryPercentage(batteries_list[power_device].percentage)
 
 				current_batteries_count = uint(len(batteries_list))
 

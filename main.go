@@ -132,6 +132,8 @@ func main() {
 	batteries_list := make(map[string]*Battery)
 	previous_batteries_count := uint(0)
 	current_batteries_count := uint(0)
+	previous_battery_status := charging_status(-1)
+	current_battery_status := charging_status(-1)
 
 	for {
 		power_devices := getPowerDevicesList()
@@ -167,6 +169,7 @@ func main() {
 						continue
 					}
 					if matchString("state", battery_info) {
+						previous_battery_status = current_battery_status
 						battery_charging_state := strings.TrimSpace(
 							strings.Split(strings.TrimSpace(battery_info), ":")[1],
 						)
@@ -179,8 +182,12 @@ func main() {
 							batteries_list[power_device].status = charged
 						}
 						log.Printf("Battery state: %v\n", battery_charging_state)
+						current_battery_status = batteries_list[power_device].status
 					}
 				}
+
+				compareBatteryStatus(previous_battery_status, current_battery_status)
+
 				current_batteries_count = uint(len(batteries_list))
 
 				if previous_batteries_count != 0 && current_batteries_count != 0 {
@@ -195,7 +202,6 @@ func main() {
 					}
 				}
 			}
-
 		}
 	}
 }

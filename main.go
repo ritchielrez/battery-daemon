@@ -117,18 +117,6 @@ func stringToInt(s string) int {
 }
 
 func main() {
-	// cmd := exec.Command("acpi")
-	// output, err := cmd.CombinedOutput()
-	// if err != nil {
-	// 	log.Println("Error,", err)
-	// 	return
-	// }
-	//
-	// battery_statuses := strings.Split(string(output), "\n")
-	// log.Println(battery_statuses)
-	//
-	// time.Sleep(time.Second)
-
 	batteries_list := make(map[string]*Battery)
 	previous_batteries_count := uint(0)
 	current_batteries_count := uint(0)

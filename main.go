@@ -118,8 +118,8 @@ func stringToInt(s string) int {
 
 func main() {
 	batteries_list := make(map[string]*Battery)
-	previous_batteries_count := uint(0)
-	current_batteries_count := uint(0)
+	previous_batteries_count := -1
+	current_batteries_count := -1
 	previous_battery_status := charging_status(-1)
 	current_battery_status := charging_status(-1)
 
@@ -175,11 +175,11 @@ func main() {
 				}
 
 				compareBatteryStatus(previous_battery_status, current_battery_status)
-                checkBatteryPercentage(batteries_list[power_device].percentage)
+				checkBatteryPercentage(batteries_list[power_device].percentage)
 
-				current_batteries_count = uint(len(batteries_list))
+				current_batteries_count = len(batteries_list)
 
-				if previous_batteries_count != 0 && current_batteries_count != 0 {
+				if previous_batteries_count != -1 && current_batteries_count != -1 {
 					if previous_batteries_count+1 == current_batteries_count {
 						sendNotification("battery-daemon", "A battery has been connected", "")
 					} else if previous_batteries_count < current_batteries_count {

@@ -75,11 +75,10 @@ func checkBatteryPercentage(percentage int) {
 		log.Fatalf("BatteryState was not properly initialized\n")
 		return
 	}
-	if percentage <= warning_level {
-		sendNotification("battery-daemon", "Battery is low", "critical")
-	}
 	if percentage <= fatal_level {
 		sendNotification("battery-daemon", "Battery is really low", "critical")
+	} else if percentage <= warning_level {
+		sendNotification("battery-daemon", "Battery is low", "critical")
 	}
 }
 

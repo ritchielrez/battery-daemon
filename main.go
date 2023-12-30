@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -70,10 +71,13 @@ func compareBatteryStatus(previous, current charging_status) {
 	}
 }
 
-func checkBatteryPercentage(percentage int) {
+func checkBatteryPercentage(percentage int, status charging_status) {
 	if percentage == -1 {
 		log.Fatalf("BatteryState was not properly initialized\n")
 		return
+	}
+	if status == charging {
+		os.Exit(1)
 	}
 	if percentage <= fatal_level {
 		sendNotification("battery-daemon", "Battery is really low", "critical")
@@ -174,7 +178,7 @@ func main() {
 				}
 
 				compareBatteryStatus(previous_battery_status, current_battery_status)
-				checkBatteryPercentage(batteries_list[power_device].percentage)
+				checkBatteryPercentage(batteries_list[power_device].percentage, current_battery_status)
 
 				current_batteries_count = len(batteries_list)
 

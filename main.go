@@ -77,7 +77,7 @@ func checkBatteryPercentage(percentage int, status charging_status) {
 		return
 	}
 	if status == charging {
-		os.Exit(1)
+		return
 	}
 	if percentage <= fatal_level {
 		sendNotification("battery-daemon", "Battery is really low", "critical")

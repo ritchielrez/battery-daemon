@@ -86,6 +86,20 @@ func checkBatteryPercentage(percentage int, status charging_status) {
 	}
 }
 
+func checkBatteryDeviceCount(previous_batteries_count, current_batteries_count int) {
+	if previous_batteries_count != -1 && current_batteries_count != -1 {
+		if previous_batteries_count+1 == current_batteries_count {
+			sendNotification("battery-daemon", "A battery has been connected", "")
+		} else if previous_batteries_count < current_batteries_count {
+			sendNotification("battery-daemon", "Multiple batteries have been connected", "")
+		} else if previous_batteries_count == current_batteries_count-1 {
+			sendNotification("battery-daemon", "A battery have been disconnected", "")
+		} else if previous_batteries_count > current_batteries_count {
+			sendNotification("battery-daemon", "Multiple batteries have been disconnected", "")
+		}
+	}
+}
+
 func getPowerDevicesList() []string {
 	cmd_output := runCommand("upower", "-e")
 	power_devices := strings.Split(cmd_output, "\n")
@@ -186,18 +200,7 @@ func main() {
 				)
 
 				current_batteries_count = len(batteries_list)
-
-				if previous_batteries_count != -1 && current_batteries_count != -1 {
-					if previous_batteries_count+1 == current_batteries_count {
-						sendNotification("battery-daemon", "A battery has been connected", "")
-					} else if previous_batteries_count < current_batteries_count {
-						sendNotification("battery-daemon", "Multiple batteries have been connected", "")
-					} else if previous_batteries_count == current_batteries_count-1 {
-						sendNotification("battery-daemon", "A battery have been disconnected", "")
-					} else if previous_batteries_count > current_batteries_count {
-						sendNotification("battery-daemon", "Multiple batteries have been disconnected", "")
-					}
-				}
+				checkBatteryDeviceCount(previous_batteries_count, current_batteries_count)
 			}
 		}
 	}

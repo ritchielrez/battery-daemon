@@ -167,9 +167,11 @@ func main() {
 						if battery_charging_state == "charging" &&
 							batteries_list[power_device].status != charging {
 							batteries_list[power_device].status = charging
-						} else if battery_charging_state == "discharging" && batteries_list[power_device].status != discharging {
+						} else if battery_charging_state == "discharging" &&
+							batteries_list[power_device].status != discharging {
 							batteries_list[power_device].status = discharging
-						} else if battery_charging_state == "fully-charged" && batteries_list[power_device].status != charged {
+						} else if battery_charging_state == "fully-charged" &&
+							batteries_list[power_device].status != charged {
 							batteries_list[power_device].status = charged
 						}
 						log.Printf("Battery state: %v\n", battery_charging_state)

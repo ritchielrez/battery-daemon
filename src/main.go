@@ -2,15 +2,20 @@ package main
 
 import (
 	"log"
-	"os"
-	"os/exec"
 	"regexp"
-	"strconv"
 	"strings"
+	"time"
+
+	"github.com/ritchielrez/battery-daemon/customlogger"
+	"github.com/ritchielrez/battery-daemon/util"
 )
 
-const warning_level = 20
-const fatal_level = 10
+var customLogger *customlogger.CustomLogger
+
+const (
+	warning_level = 20
+	fatal_level   = 10
+)
 
 type charging_status int
 
@@ -26,16 +31,6 @@ type Battery struct {
 	status     charging_status
 }
 
-func runCommand(command string, args ...string) string {
-	cmd := exec.Command(command, args...)
-	cmd_output, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Fatalf("Error runnning command %s, error %v\n", command, err)
-	}
-
-	return strings.TrimSpace(string(cmd_output))
-}
-
 func sendNotification(appname string, msg string, urgency string) {
 	if urgency != "low" && urgency != "normal" && urgency != "critical" && urgency != "" {
 		log.Fatalf(
@@ -44,17 +39,19 @@ func sendNotification(appname string, msg string, urgency string) {
 	}
 
 	if appname == "" && urgency == "" {
-		_ = runCommand("dunstify", msg)
+		_ = util.RunCommand("dunstify", msg)
 	} else if appname == "" && urgency != "" {
-		_ = runCommand("dunstify", msg, "-u", urgency)
+		_ = util.RunCommand("dunstify", msg, "-u", urgency)
 	} else if appname != "" && urgency == "" {
-		_ = runCommand("dunstify", msg, "-a", appname)
+		_ = util.RunCommand("dunstify", msg, "-a", appname)
 	} else {
-		_ = runCommand("dunstify", msg, "-a", appname, "-u", urgency)
+		_ = util.RunCommand("dunstify", msg, "-a", appname, "-u", urgency)
 	}
 }
 
 func compareBatteryStatus(previous, current charging_status) {
+	var msg string
+
 	if previous == -1 && current == -1 {
 		log.Fatalf("BatteryStates were not initialized\n")
 		return
@@ -62,16 +59,20 @@ func compareBatteryStatus(previous, current charging_status) {
 	if previous != current {
 		switch current {
 		case discharging:
-			sendNotification("battery-daemon", "Battery is currently discharging", "")
+			msg = "Battery is discharging"
 		case charging:
-			sendNotification("battery-daemon", "Battery is currently charging", "")
+			msg = "Battery is charging"
 		case charged:
-			sendNotification("battery-daemon", "Battery is now fully charged", "")
+			msg = "Battery is fully charged charging"
 		}
+		sendNotification("battery-daemon", msg, "")
+		customLogger.Infof(msg)
 	}
 }
 
 func checkBatteryPercentage(percentage int, status charging_status) {
+	var msg string
+
 	if percentage == -1 {
 		log.Fatalf("BatteryState was not properly initialized\n")
 		return
@@ -80,10 +81,12 @@ func checkBatteryPercentage(percentage int, status charging_status) {
 		return
 	}
 	if percentage <= fatal_level {
-		sendNotification("battery-daemon", "Battery is really low", "critical")
+		msg = "Battery is really low"
 	} else if percentage <= warning_level {
-		sendNotification("battery-daemon", "Battery is low", "critical")
+		msg = "Battery is low"
 	}
+	sendNotification("battery-daemon", msg, "critical")
+	customLogger.Infof(msg)
 }
 
 func checkBatteryDeviceCount(previous_batteries_count, current_batteries_count int) {
@@ -101,13 +104,13 @@ func checkBatteryDeviceCount(previous_batteries_count, current_batteries_count i
 }
 
 func getPowerDevicesList() []string {
-	cmd_output := runCommand("upower", "-e")
+	cmd_output := util.RunCommand("upower", "-e")
 	power_devices := strings.Split(cmd_output, "\n")
 	return power_devices
 }
 
 func getBatteryInfoList(power_device string) []string {
-	cmd_output := runCommand("upower", "-i", power_device)
+	cmd_output := util.RunCommand("upower", "-i", power_device)
 	battery_info_list := strings.Split(cmd_output, "\n")
 	return battery_info_list
 }
@@ -115,7 +118,7 @@ func getBatteryInfoList(power_device string) []string {
 func matchString(pattern string, s string) bool {
 	re, err := regexp.Compile(pattern)
 	if err != nil {
-		log.Fatalf("Error running regex on string %s, pattern %s, error %v\n", pattern, s, err)
+		log.Fatalf("Error running regex on string %s, pattern %s, error: %v\n", pattern, s, err)
 		return false
 	}
 	if re.MatchString(s) {
@@ -125,20 +128,17 @@ func matchString(pattern string, s string) bool {
 	}
 }
 
-func stringToInt(s string) int {
-	num, err := strconv.Atoi(s)
-	if err != nil {
-		log.Fatalf("Cannot convert string %s to integer, error %v\n", s, err)
-	}
-	return num
-}
-
 func main() {
 	batteries_list := make(map[string]*Battery)
-	previous_batteries_count := -1
+
+	var previous_batteries_count int
 	current_batteries_count := -1
+
 	previous_battery_status := charging_status(-1)
 	current_battery_status := charging_status(-1)
+
+	customLogger = customlogger.CustomLoggerInit()
+	defer customLogger.Logfile.File.Close()
 
 	for {
 		power_devices := getPowerDevicesList()
@@ -159,15 +159,18 @@ func main() {
 						batteries_list[power_device].model_name = strings.TrimSpace(
 							strings.Split(battery_info, ":")[1],
 						)
-						log.Printf("Battery model: %v\n", batteries_list[power_device].model_name)
+						customLogger.Debugf(
+							"Battery model: %v\n",
+							batteries_list[power_device].model_name,
+						)
 						continue
 					}
 					if matchString("percentage", battery_info) {
 						percentage_str := strings.TrimSuffix(strings.TrimSpace(
 							strings.Split(battery_info, ":")[1],
 						), "%")
-						batteries_list[power_device].percentage = stringToInt(percentage_str)
-						log.Printf(
+						batteries_list[power_device].percentage = util.StringToInt(percentage_str)
+						customLogger.Debugf(
 							"Battery percentage: %v\n",
 							batteries_list[power_device].percentage,
 						)
@@ -188,7 +191,7 @@ func main() {
 							batteries_list[power_device].status != charged {
 							batteries_list[power_device].status = charged
 						}
-						log.Printf("Battery state: %v\n", battery_charging_state)
+						customLogger.Debugf("Battery state: %v\n", battery_charging_state)
 						current_battery_status = batteries_list[power_device].status
 					}
 				}
@@ -203,5 +206,7 @@ func main() {
 				checkBatteryDeviceCount(previous_batteries_count, current_batteries_count)
 			}
 		}
+
+		time.Sleep(1 * time.Second)
 	}
 }

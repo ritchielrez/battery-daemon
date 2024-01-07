@@ -7,7 +7,7 @@
 battery-daemon
 
 # Binary directories
-./bin/
+bin/
 
 # Test binary, built with `go test -c`
 *.test

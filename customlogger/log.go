@@ -54,9 +54,6 @@ func (cl *CustomLogger) Infof(format string, args ...interface{}) {
 			log.Fatalf("Error: %v\n", err)
 		}
 		cl.Info = log.New(cl.Logfile.File, "INFO: ", log.Ltime)
-	} else if config.LogToFile && cl.Info == nil && cl.Logfile.File != nil {
-	} else {
-		return
 	}
 
 	cl.Info.Printf(format, args...)
@@ -72,10 +69,6 @@ func (cl *CustomLogger) Errorf(format string, args ...interface{}) {
 			log.Fatalf("Error creating file %s, error: %v\n", config.LogFileName, err)
 		}
 		cl.Info = log.New(cl.Logfile.File, "INFO: ", log.Ltime)
-	} else if config.LogToFile && cl.Info == nil && cl.Logfile.File != nil {
-		log.Fatalf("Error, expected initial value of Logfile: nil\n")
-	} else {
-		return
 	}
 
 	cl.Info.Printf(format, args...)

@@ -6,6 +6,9 @@
 *.dylib
 battery-daemon
 
+# Binary directories
+./bin/
+
 # Test binary, built with `go test -c`
 *.test
 

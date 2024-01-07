@@ -71,5 +71,5 @@ func (cl *CustomLogger) Errorf(format string, args ...interface{}) {
 		cl.Info = log.New(cl.Logfile.File, "INFO: ", log.Ltime)
 	}
 
-	cl.Info.Printf(format, args...)
+	cl.Info.Fatalf(format, args...)
 }

@@ -63,7 +63,7 @@ func compareBatteryStatus(previous, current charging_status) {
 		case charging:
 			msg = "Battery is charging"
 		case charged:
-			msg = "Battery is fully charged charging"
+			msg = "Battery is fully charged"
 		}
 		sendNotification("battery-daemon", msg, "")
 		customLogger.Infof(msg)

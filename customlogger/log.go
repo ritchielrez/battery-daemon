@@ -36,7 +36,7 @@ func CustomLoggerInit() *CustomLogger {
 
 func (cl *CustomLogger) Debugf(format string, args ...interface{}) {
 	if config.Debug && cl.Debug == nil {
-		cl.Debug = log.New(os.Stdout, "DEBUG: ", log.Ltime)
+		cl.Debug = log.New(os.Stdout, "DEBUG: ", log.Ltime|log.Ldate)
 	} else if !config.Debug {
 		return
 	}
@@ -46,7 +46,7 @@ func (cl *CustomLogger) Debugf(format string, args ...interface{}) {
 
 func (cl *CustomLogger) Infof(format string, args ...interface{}) {
 	if config.Debug && cl.Info == nil {
-		cl.Info = log.New(os.Stdout, "INFO: ", log.Ltime)
+		cl.Info = log.New(os.Stdout, "INFO: ", log.Ltime|log.Ldate)
 	} else if config.LogToFile && cl.Info == nil && cl.Logfile.File == nil {
 		var err error
 		cl.Logfile.File, err = os.OpenFile(config.LogFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
@@ -61,14 +61,14 @@ func (cl *CustomLogger) Infof(format string, args ...interface{}) {
 
 func (cl *CustomLogger) Errorf(format string, args ...interface{}) {
 	if config.Debug && cl.Info == nil {
-		cl.Error = log.New(os.Stdout, "INFO: ", log.Ltime)
+		cl.Error = log.New(os.Stdout, "INFO: ", log.Ltime|log.Ldate)
 	} else if config.LogToFile && cl.Info == nil && cl.Logfile.File == nil {
 		var err error
 		cl.Logfile.File, err = os.OpenFile(config.LogFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		if err != nil {
 			log.Fatalf("Error creating file %s, error: %v\n", config.LogFileName, err)
 		}
-		cl.Info = log.New(cl.Logfile.File, "INFO: ", log.Ltime)
+		cl.Info = log.New(cl.Logfile.File, "INFO: ", log.Ltime|log.Ldate)
 	}
 
 	cl.Info.Fatalf(format, args...)

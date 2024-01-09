@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-	"regexp"
 	"strings"
 	"time"
 
@@ -33,7 +31,7 @@ type Battery struct {
 
 func sendNotification(appname string, msg string, urgency string) {
 	if urgency != "low" && urgency != "normal" && urgency != "critical" && urgency != "" {
-		log.Fatalf(
+		customLogger.Errorf(
 			"Invalid urgency level specified, by default the urgency level is 'normal', but other valid ones are: 'low', 'critical'\n",
 		)
 	}
@@ -53,7 +51,7 @@ func compareBatteryStatus(previous, current charging_status) {
 	var msg string
 
 	if previous == -1 && current == -1 {
-		log.Fatalf("BatteryStates were not initialized\n")
+		customLogger.Errorf("BatteryStates were not initialized\n")
 		return
 	}
 	if previous != current {
@@ -74,7 +72,7 @@ func checkBatteryPercentage(percentage int, status charging_status) {
 	var msg string
 
 	if percentage == -1 {
-		log.Fatalf("BatteryState was not properly initialized\n")
+		customLogger.Errorf("BatteryState was not properly initialized\n")
 		return
 	}
 	if status == charging {
@@ -82,11 +80,13 @@ func checkBatteryPercentage(percentage int, status charging_status) {
 	}
 	if percentage <= fatal_level {
 		msg = "Battery is really low"
+		sendNotification("battery-daemon", msg, "critical")
+		customLogger.Infof(msg)
 	} else if percentage <= warning_level {
 		msg = "Battery is low"
+		sendNotification("battery-daemon", msg, "critical")
+		customLogger.Infof(msg)
 	}
-	sendNotification("battery-daemon", msg, "critical")
-	customLogger.Infof(msg)
 }
 
 func checkBatteryDeviceCount(previous_batteries_count, current_batteries_count int) {

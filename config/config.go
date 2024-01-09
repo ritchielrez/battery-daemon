@@ -2,9 +2,7 @@
 // to configure the application's behaviour.
 package config
 
-import "os"
-
-var USER_HOME = os.Getenv("HOME")
+import "github.com/ritchielrez/battery-daemon/util"
 
 const (
 	Debug     = false
@@ -12,5 +10,5 @@ const (
 )
 
 var (
-	LogFileName = USER_HOME + "/.config/battery-daemon/battery-daemon.log" // Full path is needed
+	LogFileName = util.GetConfigDir() + "battery-daemon/battery-daemon.log" // Full path is needed
 )

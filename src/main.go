@@ -115,19 +115,6 @@ func getBatteryInfoList(power_device string) []string {
 	return battery_info_list
 }
 
-func matchString(pattern string, s string) bool {
-	re, err := regexp.Compile(pattern)
-	if err != nil {
-		log.Fatalf("Error running regex on string %s, pattern %s, error: %v\n", pattern, s, err)
-		return false
-	}
-	if re.MatchString(s) {
-		return true
-	} else {
-		return false
-	}
-}
-
 func main() {
 	batteries_list := make(map[string]*Battery)
 
@@ -144,7 +131,7 @@ func main() {
 		power_devices := getPowerDevicesList()
 
 		for _, power_device := range power_devices {
-			if matchString("battery", power_device) {
+			if strings.Contains(power_device, "battery") {
 				previous_batteries_count = current_batteries_count
 				battery_info_list := getBatteryInfoList(power_device)
 
@@ -155,7 +142,7 @@ func main() {
 				}
 
 				for _, battery_info := range battery_info_list {
-					if matchString("model", battery_info) {
+					if strings.Contains(battery_info, "model") {
 						batteries_list[power_device].model_name = strings.TrimSpace(
 							strings.Split(battery_info, ":")[1],
 						)
@@ -164,19 +151,7 @@ func main() {
 							batteries_list[power_device].model_name,
 						)
 						continue
-					}
-					if matchString("percentage", battery_info) {
-						percentage_str := strings.TrimSuffix(strings.TrimSpace(
-							strings.Split(battery_info, ":")[1],
-						), "%")
-						batteries_list[power_device].percentage = util.StringToInt(percentage_str)
-						customLogger.Debugf(
-							"Battery percentage: %v\n",
-							batteries_list[power_device].percentage,
-						)
-						continue
-					}
-					if matchString("state", battery_info) {
+					} else if strings.Contains(battery_info, "state") {
 						previous_battery_status = current_battery_status
 						battery_charging_state := strings.TrimSpace(
 							strings.Split(strings.TrimSpace(battery_info), ":")[1],
@@ -193,6 +168,16 @@ func main() {
 						}
 						customLogger.Debugf("Battery state: %v\n", battery_charging_state)
 						current_battery_status = batteries_list[power_device].status
+					} else if strings.Contains(battery_info, "percentage") {
+						percentage_str := strings.TrimSuffix(strings.TrimSpace(
+							strings.Split(battery_info, ":")[1],
+						), "%")
+						batteries_list[power_device].percentage = util.StringToInt(percentage_str)
+						customLogger.Debugf(
+							"Battery percentage: %v\n",
+							batteries_list[power_device].percentage,
+						)
+						continue
 					}
 				}
 

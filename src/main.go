@@ -46,16 +46,16 @@ const (
 // current percentage level and charging status, e.g
 // charging, discharging or fully-charged.
 type Battery struct {
-	model_name string
-	percentage int
-	status     charging_status
+	Model_name string
+	Percentage int
+	Status     charging_status
 }
 
-// sendNotification sends a notification using the `dunstify`
+// SendNotification sends a notification using the `dunstify`
 // command. Default urgency level is set to normal. The urgency
-// level can be passed to sendNotification, it is also possible
+// level can be passed to SendNotification, it is also possible
 // to pass the appname.
-func sendNotification(appname string, msg string, urgency string) {
+func SendNotification(appname string, msg string, urgency string) {
 	if urgency != "low" && urgency != "normal" && urgency != "critical" && urgency != "" {
 		customLogger.Errorf(
 			"Invalid urgency level specified, by default the urgency level is 'normal', but other valid ones are: 'low', 'critical'\n",
@@ -73,10 +73,10 @@ func sendNotification(appname string, msg string, urgency string) {
 	}
 }
 
-// compareBatteryStatus compares the previous charging status
+// CompareBatteryStatus compares the previous charging status
 // of a battery with the current one. Both the statuses need
-// to be passed to compareBatteryStatus.
-func compareBatteryStatus(previous, current charging_status) {
+// to be passed to CompareBatteryStatus.
+func CompareBatteryStatus(previous, current charging_status) {
 	var msg string
 
 	if previous == -1 && current == -1 {
@@ -92,16 +92,16 @@ func compareBatteryStatus(previous, current charging_status) {
 		case charged:
 			msg = "Battery is fully charged"
 		}
-		sendNotification("battery-daemon", msg, "")
+		SendNotification("battery-daemon", msg, "")
 		customLogger.Infof(msg)
 	}
 }
 
-// checkBatteryPercentage checks if a battery's current percentage
+// CheckBatteryPercentage checks if a battery's current percentage
 // is really or not. Current charging status needs to be passed to
-// checkBatteryPercentage, so it does not inform the user about
+// CheckBatteryPercentage, so it does not inform the user about
 // their low battery percentage if the battery is charging.
-func checkBatteryPercentage(percentage int, status charging_status) {
+func CheckBatteryPercentage(percentage int, status charging_status) {
 	var msg string
 
 	if percentage == -1 {
@@ -113,44 +113,44 @@ func checkBatteryPercentage(percentage int, status charging_status) {
 	}
 	if percentage <= fatal_level {
 		msg = "Battery is really low"
-		sendNotification("battery-daemon", msg, "critical")
+		SendNotification("battery-daemon", msg, "critical")
 		customLogger.Infof(msg)
 	} else if percentage <= warning_level {
 		msg = "Battery is low"
-		sendNotification("battery-daemon", msg, "critical")
+		SendNotification("battery-daemon", msg, "critical")
 		customLogger.Infof(msg)
 	}
 }
 
-// checkBatteryDeviceCount checks if one or multiple batteries have been
+// CheckBatteryDeviceCount checks if one or multiple batteries have been
 // connected or disconnected. Previous and current battery count needes to
-// be passed to checkBatteryDeviceCount
-func checkBatteryDeviceCount(previous_batteries_count, current_batteries_count int) {
+// be passed to CheckBatteryDeviceCount
+func CheckBatteryDeviceCount(previous_batteries_count, current_batteries_count int) {
 	if previous_batteries_count != -1 && current_batteries_count != -1 {
 		if previous_batteries_count+1 == current_batteries_count {
-			sendNotification("battery-daemon", "A battery has been connected", "")
+			SendNotification("battery-daemon", "A battery has been connected", "")
 		} else if previous_batteries_count < current_batteries_count {
-			sendNotification("battery-daemon", "Multiple batteries have been connected", "")
+			SendNotification("battery-daemon", "Multiple batteries have been connected", "")
 		} else if previous_batteries_count == current_batteries_count-1 {
-			sendNotification("battery-daemon", "A battery have been disconnected", "")
+			SendNotification("battery-daemon", "A battery have been disconnected", "")
 		} else if previous_batteries_count > current_batteries_count {
-			sendNotification("battery-daemon", "Multiple batteries have been disconnected", "")
+			SendNotification("battery-daemon", "Multiple batteries have been disconnected", "")
 		}
 	}
 }
 
-// getPowerDevicesList uses the `upower` command to get list of currently
+// GetPowerDevicesList uses the `upower` command to get list of currently
 // avalaible power devices to use. These devices can not only be batteries,
 // but also display devices etc. Returns a string slice.
-func getPowerDevicesList() []string {
+func GetPowerDevicesList() []string {
 	cmd_output := util.RunCommand("upower", "-e")
 	power_devices := strings.Split(cmd_output, "\n")
 	return power_devices
 }
 
-// getBatteryInfoList uses the `upower` command to get all the information
+// GetBatteryInfoList uses the `upower` command to get all the information
 // about a specific battery. Returns a string slice.
-func getBatteryInfoList(power_device string) []string {
+func GetBatteryInfoList(power_device string) []string {
 	cmd_output := util.RunCommand("upower", "-i", power_device)
 	battery_info_list := strings.Split(cmd_output, "\n")
 	return battery_info_list
@@ -176,7 +176,7 @@ func main() {
 	defer customLogger.Logfile.File.Close()
 
 	for {
-		power_devices := getPowerDevicesList()
+		power_devices := GetPowerDevicesList()
 
 		for _, power_device := range power_devices {
 			// upower also gives infomartion about display devices, so
@@ -186,12 +186,12 @@ func main() {
 
 				// Battery info list is basically just a command output
 				// from upower about a speciifc battery.
-				battery_info_list := getBatteryInfoList(power_device)
+				battery_info_list := GetBatteryInfoList(power_device)
 
 				batteries_list[power_device] = &Battery{
-					model_name: "",
-					percentage: -1,
-					status:     -1,
+					Model_name: "",
+					Percentage: -1,
+					Status:     -1,
 				}
 
 				// Iterate through the cmd output
@@ -199,12 +199,12 @@ func main() {
 					// Checking for substrings per line to parse the
 					// necessary infomartion out of the command output.
 					if strings.Contains(battery_info, "model") {
-						batteries_list[power_device].model_name = strings.TrimSpace(
+						batteries_list[power_device].Model_name = strings.TrimSpace(
 							strings.Split(battery_info, ":")[1],
 						)
 						customLogger.Debugf(
 							"Battery model: %v\n",
-							batteries_list[power_device].model_name,
+							batteries_list[power_device].Model_name,
 						)
 						continue
 					} else if strings.Contains(battery_info, "state") {
@@ -214,40 +214,40 @@ func main() {
 						)
 
 						if battery_charging_state == "charging" &&
-							batteries_list[power_device].status != charging {
-							batteries_list[power_device].status = charging
+							batteries_list[power_device].Status != charging {
+							batteries_list[power_device].Status = charging
 						} else if battery_charging_state == "discharging" &&
-							batteries_list[power_device].status != discharging {
-							batteries_list[power_device].status = discharging
+							batteries_list[power_device].Status != discharging {
+							batteries_list[power_device].Status = discharging
 						} else if battery_charging_state == "fully-charged" &&
-							batteries_list[power_device].status != charged {
-							batteries_list[power_device].status = charged
+							batteries_list[power_device].Status != charged {
+							batteries_list[power_device].Status = charged
 						}
 
 						customLogger.Debugf("Battery state: %v\n", battery_charging_state)
-						current_battery_status = batteries_list[power_device].status
+						current_battery_status = batteries_list[power_device].Status
 					} else if strings.Contains(battery_info, "percentage") {
 						// Remove '%' from the end too.
 						percentage_str := strings.TrimSuffix(strings.TrimSpace(
 							strings.Split(battery_info, ":")[1],
 						), "%")
-						batteries_list[power_device].percentage = util.StringToInt(percentage_str)
+						batteries_list[power_device].Percentage = util.StringToInt(percentage_str)
 						customLogger.Debugf(
 							"Battery percentage: %v\n",
-							batteries_list[power_device].percentage,
+							batteries_list[power_device].Percentage,
 						)
 						continue
 					}
 				}
 
-				compareBatteryStatus(previous_battery_status, current_battery_status)
-				checkBatteryPercentage(
-					batteries_list[power_device].percentage,
+				CompareBatteryStatus(previous_battery_status, current_battery_status)
+				CheckBatteryPercentage(
+					batteries_list[power_device].Percentage,
 					current_battery_status,
 				)
 
 				current_batteries_count = len(batteries_list)
-				checkBatteryDeviceCount(previous_batteries_count, current_batteries_count)
+				CheckBatteryDeviceCount(previous_batteries_count, current_batteries_count)
 			}
 		}
 

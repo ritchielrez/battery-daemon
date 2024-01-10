@@ -1,5 +1,7 @@
-// This package contains variables that can be changed
+// Package config contains variables that can be changed
 // to configure the application's behaviour.
+//
+// This package is intended to by configured by the user.
 package config
 
 import "github.com/ritchielrez/battery-daemon/util"

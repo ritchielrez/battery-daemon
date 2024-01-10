@@ -1,4 +1,24 @@
-package main
+/*
+Battery daemon runs as a background daemon to inform
+the user about if a new battery connected or disconnected,
+more importantly sending notifications to make sure that
+user is aware of their low batter level, also reminding
+them if battery is charging, discharging or is already
+fully charged.
+
+To use this application, just compile it from source,
+make usre $XDG_CONFIG_HOME or $HOME environment variable
+is set.
+
+Usage:
+
+	battery-daemon
+
+Edit the `config/config.go` to configure this application.
+By default, this application logs important informations
+and error to ~/.config/battery-daemon/battery-daemon.log,
+the filepath can be changed though from the `config.go`.
+*/package main
 
 import (
 	"strings"
@@ -23,12 +43,19 @@ const (
 	charged
 )
 
+// A battery contains information about it's model name,
+// current percentage level and charging status, e.g
+// charging, discharging or fully-charged.
 type Battery struct {
 	model_name string
 	percentage int
 	status     charging_status
 }
 
+// sendNotification sends a notification using the `dunstify`
+// command. Default urgency level is set to normal. The urgency
+// level can be passed to sendNotification, it is also possible
+// to pass the appname.
 func sendNotification(appname string, msg string, urgency string) {
 	if urgency != "low" && urgency != "normal" && urgency != "critical" && urgency != "" {
 		customLogger.Errorf(
@@ -47,6 +74,9 @@ func sendNotification(appname string, msg string, urgency string) {
 	}
 }
 
+// compareBatteryStatus compares the previous charging status
+// of a battery with the current one. Both the statuses need
+// to be passed to compareBatteryStatus.
 func compareBatteryStatus(previous, current charging_status) {
 	var msg string
 
@@ -68,6 +98,10 @@ func compareBatteryStatus(previous, current charging_status) {
 	}
 }
 
+// checkBatteryPercentage checks if a battery's current percentage
+// is really or not. Current charging status needs to be passed to
+// checkBatteryPercentage, so it does not inform the user about
+// their low battery percentage if the battery is charging.
 func checkBatteryPercentage(percentage int, status charging_status) {
 	var msg string
 
@@ -89,6 +123,9 @@ func checkBatteryPercentage(percentage int, status charging_status) {
 	}
 }
 
+// checkBatteryDeviceCount checks if one or multiple batteries have been
+// connected or disconnected. Previous and current battery count needes to
+// be passed to checkBatteryDeviceCount
 func checkBatteryDeviceCount(previous_batteries_count, current_batteries_count int) {
 	if previous_batteries_count != -1 && current_batteries_count != -1 {
 		if previous_batteries_count+1 == current_batteries_count {
@@ -103,12 +140,17 @@ func checkBatteryDeviceCount(previous_batteries_count, current_batteries_count i
 	}
 }
 
+// getPowerDevicesList uses the `upower` command to get list of currently
+// avalaible power devices to use. These devices can not only be batteries,
+// but also display devices etc. Returns a string slice.
 func getPowerDevicesList() []string {
 	cmd_output := util.RunCommand("upower", "-e")
 	power_devices := strings.Split(cmd_output, "\n")
 	return power_devices
 }
 
+// getBatteryInfoList uses the `upower` command to get all the information
+// about a specific battery. Returns a string slice.
 func getBatteryInfoList(power_device string) []string {
 	cmd_output := util.RunCommand("upower", "-i", power_device)
 	battery_info_list := strings.Split(cmd_output, "\n")
@@ -116,11 +158,18 @@ func getBatteryInfoList(power_device string) []string {
 }
 
 func main() {
+	// NOTE: Some ints are below here have the initial value of -1
+	// Golang does not support enums, so I had to make janky
+	// solution to emulate one. Thus I had to made int const
+	// called `discharging` which is equal to 0. Setting 0 as
+	// the initial value for this codebase causes some bugs thus.
+
 	batteries_list := make(map[string]*Battery)
 
 	var previous_batteries_count int
 	current_batteries_count := -1
 
+	// There are 3 battery statuses: discharging, charging and charged.
 	previous_battery_status := charging_status(-1)
 	current_battery_status := charging_status(-1)
 
@@ -131,8 +180,13 @@ func main() {
 		power_devices := getPowerDevicesList()
 
 		for _, power_device := range power_devices {
+			// upower also gives infomartion about display devices, so
+			// making sure to get infomartions of battery devcies only.
 			if strings.Contains(power_device, "battery") {
 				previous_batteries_count = current_batteries_count
+
+				// Battery info list is basically just a command output
+				// from upower about a speciifc battery.
 				battery_info_list := getBatteryInfoList(power_device)
 
 				batteries_list[power_device] = &Battery{
@@ -141,7 +195,10 @@ func main() {
 					status:     -1,
 				}
 
+				// Iterate through the cmd output
 				for _, battery_info := range battery_info_list {
+					// Checking for substrings per line to parse the
+					// necessary infomartion out of the command output.
 					if strings.Contains(battery_info, "model") {
 						batteries_list[power_device].model_name = strings.TrimSpace(
 							strings.Split(battery_info, ":")[1],
@@ -156,6 +213,7 @@ func main() {
 						battery_charging_state := strings.TrimSpace(
 							strings.Split(strings.TrimSpace(battery_info), ":")[1],
 						)
+
 						if battery_charging_state == "charging" &&
 							batteries_list[power_device].status != charging {
 							batteries_list[power_device].status = charging
@@ -166,9 +224,11 @@ func main() {
 							batteries_list[power_device].status != charged {
 							batteries_list[power_device].status = charged
 						}
+
 						customLogger.Debugf("Battery state: %v\n", battery_charging_state)
 						current_battery_status = batteries_list[power_device].status
 					} else if strings.Contains(battery_info, "percentage") {
+						// Remove '%' from the end too.
 						percentage_str := strings.TrimSuffix(strings.TrimSpace(
 							strings.Split(battery_info, ":")[1],
 						), "%")

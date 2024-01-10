@@ -11,7 +11,7 @@ import (
 	"github.com/ritchielrez/battery-daemon/config"
 )
 
-// A CustomLogger stores dirrent types of loggers in a single struct.
+// A CustomLogger stores different types of loggers in a single struct.
 type CustomLogger struct {
 	Info    *log.Logger
 	Debug   *log.Logger

@@ -1,24 +1,23 @@
-/*
-Battery daemon runs as a background daemon to inform
-the user about if a new battery connected or disconnected,
-more importantly sending notifications to make sure that
-user is aware of their low batter level, also reminding
-them if battery is charging, discharging or is already
-fully charged.
-
-To use this application, just compile it from source,
-make usre $XDG_CONFIG_HOME or $HOME environment variable
-is set.
-
-Usage:
-
-	battery-daemon
-
-Edit the `config/config.go` to configure this application.
-By default, this application logs important informations
-and error to ~/.config/battery-daemon/battery-daemon.log,
-the filepath can be changed though from the `config.go`.
-*/package main
+// Battery daemon runs as a background daemon to inform
+// the user about if a new battery connected or disconnected,
+// more importantly sending notifications to make sure that
+// user is aware of their low batter level, also reminding
+// them if battery is charging, discharging or is already
+// fully charged.
+//
+// To use this application, just compile it from source,
+// make usre $XDG_CONFIG_HOME or $HOME environment variable
+// is set.
+//
+// Usage:
+//
+//	battery-daemon
+//
+// Edit the `config/config.go` to configure this application.
+// By default, this application logs important informations
+// and error to ~/.config/battery-daemon/battery-daemon.log,
+// the filepath can be changed though from the `config.go`.
+package main
 
 import (
 	"strings"

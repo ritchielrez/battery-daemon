@@ -23,8 +23,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ritchielrez/battery-daemon/customlogger"
-	"github.com/ritchielrez/battery-daemon/util"
+	"github.com/ritchielrez/battery-daemon/internal/customlogger"
+	"github.com/ritchielrez/battery-daemon/internal/util"
 )
 
 var customLogger *customlogger.CustomLogger

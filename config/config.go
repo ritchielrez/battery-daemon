@@ -4,7 +4,7 @@
 // This package is intended to by configured by the user.
 package config
 
-import "github.com/ritchielrez/battery-daemon/util"
+import "github.com/ritchielrez/battery-daemon/internal/util"
 
 const (
 	Debug     = false

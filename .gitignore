@@ -4,7 +4,6 @@
 *.dll
 *.so
 *.dylib
-battery-daemon
 
 # Binary directories
 bin/
